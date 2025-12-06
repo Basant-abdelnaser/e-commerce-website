@@ -15,9 +15,19 @@ exports.verifyToken = (req, res, next) => {
 };
 exports.verifyAdminAndUser = (req, res, next) => {
   console.log(req.user);
+  console.log("====================================");
+  // console.log();
+
+  console.log(req.params.id);
+  console.log("====================================");
+  console.log(req.user._id);
+  console.log("====================================");
+
   if (req.user._id === req.params.id || req.user.isAdmin === true) {
     next();
   } else {
+    console.log(req.user);
+    console.log(requestedUserId);
     return res.status(403).json({ message: "You are not allowed " });
   }
 };

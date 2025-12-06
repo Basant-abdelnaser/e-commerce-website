@@ -76,7 +76,7 @@ const valiadateRegUser = (user) => {
 const valiadateLoginUser = (user) => {
   const schema = joi.object({
     email: joi.string().email().required(),
-    password: passwordComplexity().required(),
+    password: joi.string().required(),
   });
   return schema.validate(user);
 };

@@ -31,7 +31,9 @@ exports.updateCategory = asynHandler(async (req, res) => {
     .json({ message: "Category updated successfully", updatedcategory });
 });
 exports.deleteCategory = asynHandler(async (req, res) => {
-  const category = await Category.findById(req.params.id);
+  // const category = await Category.findById(req.params.id);
+  // category.isActive = false;
+  // await category.save();
   await Category.findByIdAndDelete(req.params.id);
   res.status(200).json({ message: "Category deleted successfully" });
 });

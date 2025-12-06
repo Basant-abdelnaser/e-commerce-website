@@ -4,6 +4,7 @@ const {
   getAllTestmonialsForAdmin,
   getAlltestmonialsForUser,
   updateTestmonial,
+  deleteTestmonial,
 } = require("../controllers/testmonials.controller");
 const {
   verifyToken,
@@ -12,9 +13,11 @@ const {
 } = require("../middleware/auth.middleware");
 const router = express.Router();
 
-router.post("/", verifyToken, verifyAdminAndUser, addNewTestmonial);
+router.post("/", verifyToken, addNewTestmonial);
 router.get("/admin", verifyToken, verifyAdmin, getAllTestmonialsForAdmin);
 router.get("/", getAlltestmonialsForUser);
 router.put("/:id", verifyToken, verifyAdminAndUser, updateTestmonial);
+router.delete("/:id", verifyToken, verifyAdminAndUser,deleteTestmonial);
+
 
 module.exports = router;

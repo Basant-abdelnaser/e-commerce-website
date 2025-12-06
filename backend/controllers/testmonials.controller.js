@@ -4,7 +4,7 @@ const Testmonials = require("../models/testmonials.model");
 exports.addNewTestmonial = asyncHandler(async (req, res) => {
   const newTestmonial = new Testmonials({
     user: req.user._id,
-    product: req.body.product,
+    // product: req.body.product,
     message: req.body.message,
     rating: req.body.rating,
   });
@@ -14,9 +14,10 @@ exports.addNewTestmonial = asyncHandler(async (req, res) => {
     .json({ message: "Testmonial added successfully", savedTestmonial });
 });
 exports.getAllTestmonialsForAdmin = asyncHandler(async (req, res) => {
-  const testmonials = await Testmonials.find({ isDeleted: false })
-    .populate("user")
-    .populate("product");
+  const testmonials = await Testmonials.find({ isDeleted: false }).populate(
+    "user"
+  );
+
   res
     .status(200)
     .json({ message: "Testmonials fetched successfully", testmonials });
@@ -25,7 +26,7 @@ exports.getAlltestmonialsForUser = asyncHandler(async (req, res) => {
   const testmonials = await Testmonials.find({
     visibleToClient: true,
     isDeleted: false,
-  });
+  }).populate("user");
   res
     .status(200)
     .json({ message: "Testmonials fetched successfully", testmonials });

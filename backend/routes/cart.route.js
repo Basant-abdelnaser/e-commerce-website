@@ -6,11 +6,17 @@ const {
   deletecartItem,
   clearCart,
   getcartTotal,
+  getCartForUser,
 } = require("../controllers/cart.controller");
-const { verifyToken } = require("../middleware/auth.middleware");
+const {
+  verifyToken,
+  verifyAdmin,
+  verifyAdminAndUser,
+} = require("../middleware/auth.middleware");
 const router = express.Router();
 
-router.get("/", verifyToken, getcartItems);
+router.get("/admin", verifyToken, verifyAdmin, getcartItems);
+router.get("/", verifyToken, getCartForUser);
 router.post("/", verifyToken, addToCart);
 router.put("/update", verifyToken, updatecartItem);
 router.delete("/clear", verifyToken, clearCart);

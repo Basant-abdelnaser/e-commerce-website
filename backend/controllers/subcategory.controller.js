@@ -12,7 +12,9 @@ exports.addNewsubCategory = asynHandler(async (req, res) => {
     .json({ message: "subcategory added successfully", savedSubCategory });
 });
 exports.getAllSubCategories = asynHandler(async (req, res) => {
-  const subCategories = await SubCategory.find().populate("category");
+  const subCategories = await SubCategory.find({ isActive: true }).populate(
+    "category"
+  );
   res
     .status(200)
     .json({ message: "subcategories fetched successfully", subCategories });
@@ -32,6 +34,10 @@ exports.updateSubCategory = asynHandler(async (req, res) => {
     .json({ message: "subcategory updated successfully", updatedSubCategory });
 });
 exports.deleteSubCategory = asynHandler(async (req, res) => {
-  await SubCategory.findByIdAndDelete(req.params.id);
-  res.status(200).json({ message: "subcategory deleted successfully" });
+  const category = await SubCategory.findById(req.params.id);
+  category.isActive = false;
+  await category.save();
+  res
+    .status(200)
+    .json({ message: "subcategory deleted successfully", category });
 });

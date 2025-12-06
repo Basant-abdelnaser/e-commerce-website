@@ -13,13 +13,13 @@ exports.getcartItems = asynchandler(async (req, res) => {
 
 exports.addToCart = asynchandler(async (req, res) => {
   const userId = req.user._id;
-  const { product, quantity, price } = req.body;
+  const { product, quantity } = req.body;
 
   let cart = await Cart.findOne({ user: userId });
   if (!cart) {
     cart = await Cart.create({
       user: userId,
-      products: [{ product, quantity, price }],
+      products: [{ product, quantity }],
     });
     return res
       .status(201)
@@ -31,7 +31,7 @@ exports.addToCart = asynchandler(async (req, res) => {
   if (existingProductIndex !== -1) {
     cart.products[existingProductIndex].quantity += quantity;
   } else {
-    cart.products.push({ product, quantity, price });
+    cart.products.push({ product, quantity });
   }
   await cart.save();
   res.status(201).json({ message: "Item added to cart successfully", cart });
@@ -40,42 +40,52 @@ exports.addToCart = asynchandler(async (req, res) => {
 exports.updatecartItem = asynchandler(async (req, res) => {
   const userId = req.user._id;
   const { product, quantity } = req.body;
+
   if (!product || !quantity) {
-    res.status(400).json({ message: "product and quantity are required" });
+    return res
+      .status(400)
+      .json({ message: "product and quantity are required" });
   }
+
   if (quantity < 1) {
-    res.status(400).json({ message: "quantity must be greater than 0" });
+    return res.status(400).json({ message: "quantity must be greater than 0" });
   }
+
   const cart = await Cart.findOne({ user: userId });
   if (!cart) {
-    res.status(404).json({ message: "cart not found" });
+    return res.status(404).json({ message: "cart not found" });
   }
+
   const productIndex = cart.products.findIndex(
     (item) => item.product.toString() === product
   );
   if (productIndex === -1) {
-    res.status(404).json({ message: "product not found in cart" });
+    return res.status(404).json({ message: "product not found in cart" });
   }
+
   cart.products[productIndex].quantity = quantity;
   await cart.save();
-  res.status(200).json({ message: "cart updated successfully", cart });
+
+  return res.status(200).json({ message: "cart updated successfully", cart });
 });
 
 exports.deletecartItem = asynchandler(async (req, res) => {
   const itemId = req.params.itemId;
+
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart) {
     return res.status(404).json({ message: "Cart not found" });
   }
-  cart.products = cart.products.filter((item) => {
-    console.log(item._id.toString() !== itemId);
-    console.log(item._id.toString(), itemId);
-    return item._id.toString() !== itemId;
-  });
-  console.log(itemId);
+
+  cart.products = cart.products.filter(
+    (item) => item._id.toString() !== itemId
+  );
+
   await cart.save();
-  console.log(cart.products);
-  res.status(200).json({ message: "Item removed from cart successfully" });
+
+  return res
+    .status(200)
+    .json({ message: "Item removed from cart successfully" });
 });
 
 exports.clearCart = asynchandler(async (req, res) => {
@@ -97,4 +107,14 @@ exports.getcartTotal = asynchandler(async (req, res) => {
   return res
     .status(200)
     .json({ tmessage: "Total fetched successfully", total });
+});
+exports.getCartForUser = asynchandler(async (req, res) => {
+  const cart = await Cart.findOne({ user: req.user._id }).populate(
+    "products.product"
+  );
+  if (!cart) {
+    return res.status(404).json({ message: "Cart not found" });
+  }
+  const cartItems = cart.products;
+  return res.status(200).json({ cartItems });
 });

@@ -36,3 +36,12 @@ exports.deleteOrder = asyncHandler(async (req, res) => {
   await Order.findByIdAndDelete(req.params.id);
   res.status(200).json({ message: "Order deleted successfully" });
 });
+exports.getUserOrders = asyncHandler(async (req, res) => {
+  const orders = await Order.find({user : req.user._id})
+    .populate("user")
+    .populate("products.product");
+  if (!orders) {
+    return res.status(404).json({ message: "orders not found" });
+  }
+  return res.status(200).json({ orders });
+});
