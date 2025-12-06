@@ -1,0 +1,191 @@
+<div class="container">
+  <div class="header-section">
+    <h1>User Management</h1>
+    <!-- <button class="btn-refresh" (click)="refreshUsers()" [disabled]="isLoading">
+      🔄 Refresh Users
+    </button> -->
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading users...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <p class="error-message">{{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadAllUsers()">Try Again</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-number">{{ users.length }}</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card active-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-number">{{ getActiveUsers() }}</div>
+        <div class="stat-label">Active Users</div>
+      </div>
+      <div class="stat-card blocked-card">
+        <div class="stat-icon">🚫</div>
+        <div class="stat-number">{{ getBlockedUsers() }}</div>
+        <div class="stat-label">Blocked Users</div>
+      </div>
+      <div class="stat-card admin-card">
+        <div class="stat-icon">👑</div>
+        <div class="stat-number">{{ getAdminUsers() }}</div>
+        <div class="stat-label">Admins</div>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="search-bar">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="onSearch()"
+        placeholder="🔍 Search by name, email, or phone..."
+        class="search-input"
+      />
+      <select [(ngModel)]="filterStatus" (change)="onSearch()" class="filter-select">
+        <option value="all">All Users</option>
+        <option value="active">Active Only</option>
+        <option value="blocked">Blocked Only</option>
+        <option value="admin">Admins Only</option>
+      </select>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-container">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Join Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of getPaginatedUsers()" [class.blocked-row]="user.blocked">
+            <td>
+              <div class="user-cell">
+                <div class="avatar" [class.avatar-admin]="user.isAdmin">
+                  {{ user.name.charAt(0).toUpperCase() }}
+                </div>
+                <div class="user-info">
+                  <span class="user-name">{{ user.name }}</span>
+                  <span class="user-id">#{{ user._id.slice(-6) }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="email-text">{{ user.email }}</span>
+            </td>
+            <td>
+              <span class="phone-text">{{ user.phone }}</span>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [class.badge-admin]="user.isAdmin"
+                [class.badge-user]="!user.isAdmin"
+              >
+                {{ user.isAdmin ? '👑 Admin' : '👤 User' }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [class.badge-blocked]="user.blocked"
+                [class.badge-active]="!user.blocked"
+              >
+                {{ user.blocked ? '🚫 Blocked' : '✅ Active' }}
+              </span>
+            </td>
+            <td>
+              <span class="date-text">{{ user.joinDate }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  *ngIf="!user.blocked"
+                  (click)="blockUser(user)"
+                  class="btn btn-block"
+                  [disabled]="user.isAdmin"
+                  [title]="user.isAdmin ? 'Cannot block admin users' : 'Block user'"
+                >
+                  🚫 Block
+                </button>
+                <button *ngIf="user.blocked" (click)="unblockUser(user)" class="btn btn-unblock">
+                  ✓ Unblock
+                </button>
+                <button
+                  (click)="deleteUser(user)"
+                  class="btn btn-delete"
+                  [disabled]="user.isAdmin"
+                  [title]="user.isAdmin ? 'Cannot delete admin users' : 'Delete user'"
+                >
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="getFilteredUsers().length === 0" class="empty-state">
+        <div class="empty-icon">👥</div>
+        <h3>No users found</h3>
+        <p>Try adjusting your search or filter criteria</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="getFilteredUsers().length > 0">
+      <button
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="pagination-btn"
+      >
+        ← Previous
+      </button>
+
+      <div class="pagination-pages">
+        <button
+          *ngFor="let page of getPageNumbers()"
+          (click)="page > 0 ? goToPage(page) : null"
+          [class.active]="currentPage === page"
+          [class.ellipsis]="page === -1"
+          [disabled]="page === -1"
+          class="pagination-page"
+        >
+          {{ page > 0 ? page : '...' }}
+        </button>
+      </div>
+
+      <button
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === getTotalPages()"
+        class="pagination-btn"
+      >
+        Next →
+      </button>
+    </div>
+
+    <!-- Pagination Info -->
+    <div class="pagination-info" *ngIf="getFilteredUsers().length > 0">
+      Showing <strong>{{ getStartIndex() + 1 }}</strong> to <strong>{{ getEndIndex() }}</strong> of
+      <strong>{{ getFilteredUsers().length }}</strong> users
+    </div>
+  </div>
+</div>

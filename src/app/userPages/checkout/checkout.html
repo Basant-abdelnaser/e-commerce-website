@@ -1,0 +1,187 @@
+<div class="checkout-page">
+  <div class="container">
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+      <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+        <div class="step-number">1</div>
+        <span class="step-label">Personal Info</span>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 1"></div>
+
+      <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+        <div class="step-number">2</div>
+        <span class="step-label">Shipping</span>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 2"></div>
+
+      <div class="step" [class.active]="currentStep >= 3">
+        <div class="step-number">3</div>
+        <span class="step-label">Review</span>
+      </div>
+    </div>
+
+    <div class="checkout-layout">
+      <!-- Main Content -->
+      <div class="checkout-form-section">
+        <!-- Step 1: Personal Information -->
+        <div class="form-card" *ngIf="currentStep === 1">
+          <h2>👤 Personal Information</h2>
+
+          <div *ngIf="isLoadingUser" class="loading-message">Loading your information...</div>
+
+          <div *ngIf="!isLoadingUser">
+            <div class="form-group">
+              <label>Your Name *</label>
+              <input type="text" [(ngModel)]="checkoutForm.name" placeholder="John Doe" />
+            </div>
+
+            <div class="form-group">
+              <label>Email Address *</label>
+              <input
+                type="email"
+                [(ngModel)]="checkoutForm.email"
+                placeholder="john.doe@example.com"
+              />
+              <small class="field-note">Email cannot be changed</small>
+            </div>
+
+            <div class="form-group">
+              <label>Phone Number *</label>
+              <input type="tel" [(ngModel)]="checkoutForm.phone" placeholder="012 222 222 22" />
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-next" (click)="nextStep()">Continue to Shipping →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Shipping Address -->
+        <div class="form-card" *ngIf="currentStep === 2">
+          <h2>🚚 Shipping Address</h2>
+
+          <div class="form-group">
+            <label>Governorate *</label>
+            <input type="text" [(ngModel)]="checkoutForm.address.governorate" placeholder="Cairo" />
+          </div>
+
+          <div class="form-group">
+            <label>City *</label>
+            <input type="text" [(ngModel)]="checkoutForm.address.city" placeholder="Nasr City" />
+          </div>
+
+          <div class="form-group">
+            <label>Street Address *</label>
+            <input
+              type="text"
+              [(ngModel)]="checkoutForm.address.street"
+              placeholder="123 Main Street, Building 5, Apt 4B"
+            />
+          </div>
+
+          <div class="checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="checkoutForm.saveInfo" />
+              <span>Save this address to my profile</span>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-back" (click)="previousStep()">← Back</button>
+            <button class="btn-next" (click)="nextStep()">Review Order →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Review Order -->
+        <div class="form-card" *ngIf="currentStep === 3">
+          <h2>📋 Review Your Order</h2>
+
+          <div class="review-section">
+            <h3>Personal Information</h3>
+            <p><strong>Name:</strong> {{ checkoutForm.name }}</p>
+            <p><strong>Email:</strong> {{ checkoutForm.email }}</p>
+            <p><strong>Phone:</strong> {{ checkoutForm.phone }}</p>
+            <button class="edit-btn" (click)="goToStep(1)">Edit</button>
+          </div>
+
+          <div class="review-section">
+            <h3>Shipping Address</h3>
+            <p>{{ checkoutForm.address.street }}</p>
+            <p>{{ checkoutForm.address.city }}, {{ checkoutForm.address.governorate }}</p>
+            <p>Egypt</p>
+            <button class="edit-btn" (click)="goToStep(2)">Edit</button>
+          </div>
+
+          <div class="review-section">
+            <h3>Order Items</h3>
+            <div *ngIf="isLoadingCart" class="loading-message">Loading cart items...</div>
+            <div *ngIf="!isLoadingCart && cartItems.length === 0" class="empty-cart">
+              Your cart is empty
+            </div>
+            <div class="review-item" *ngFor="let item of cartItems">
+              <span>{{ item.name }} (x{{ item.quantity }})</span>
+              <span>${{ (item.price * item.quantity).toFixed(2) }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-back" (click)="previousStep()">← Back</button>
+            <button
+              class="btn-complete"
+              (click)="completeOrder()"
+              [disabled]="cartItems.length === 0"
+            >
+              Complete Order 🎉
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary Sidebar -->
+      <div class="order-summary-sidebar">
+        <div class="summary-card">
+          <h3>Order Summary</h3>
+
+          <div *ngIf="isLoadingCart" class="loading-message">Loading...</div>
+
+          <div *ngIf="!isLoadingCart">
+            <div class="summary-items">
+              <div class="summary-item" *ngFor="let item of cartItems">
+                <span>{{ item.name }} (x{{ item.quantity }})</span>
+                <span>${{ (item.price * item.quantity).toFixed(2) }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="cartItems.length === 0" class="empty-cart-summary">No items in cart</div>
+
+            <div *ngIf="cartItems.length > 0">
+              <div class="summary-divider"></div>
+
+              <div class="summary-row">
+                <span>Subtotal</span>
+                <span>${{ getSubtotal().toFixed(2) }}</span>
+              </div>
+
+              <div class="summary-row">
+                <span>Shipping</span>
+                <span>${{ getShippingCost().toFixed(2) }}</span>
+              </div>
+
+              <div class="summary-row">
+                <span>Tax (10%)</span>
+                <span>${{ getTax().toFixed(2) }}</span>
+              </div>
+
+              <div class="summary-divider"></div>
+
+              <div class="summary-total">
+                <span>Total</span>
+                <span>${{ getTotal().toFixed(2) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

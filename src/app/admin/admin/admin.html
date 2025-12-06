@@ -1,0 +1,13 @@
+<div class="admin-header">
+  <p>Admin Dashboard</p>
+  <a routerLink="manage-categories" routerLinkActive="active">Categories</a>
+  <a routerLink="users" routerLinkActive="active">Users</a>
+  <a routerLink="manage-testmonials" routerLinkActive="active">Testimonials</a>
+  <a routerLink="user-orders" routerLinkActive="active">Orders</a>
+  <a routerLink="manage-products" routerLinkActive="active">Products</a>
+</div>
+
+<!-- هنا بيتعرض أي Component حسب الـ Route -->
+<div class="admin-content">
+  <router-outlet></router-outlet>
+</div>

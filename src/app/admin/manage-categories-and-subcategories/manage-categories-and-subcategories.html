@@ -1,0 +1,146 @@
+<div class="container">
+  <h1>Category Manager</h1>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading categories...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <p class="error-message">{{ errorMessage }}</p>
+    <button (click)="loadCategories()" class="btn btn-primary">Retry</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <!-- Add New Category -->
+    <div class="card">
+      <h2>Add New Category</h2>
+      <div class="input-group">
+        <input
+          type="text"
+          [(ngModel)]="newCategory"
+          (keypress)="onKeyPress($event, 'category')"
+          placeholder="Enter category name"
+          class="input-field"
+        />
+        <button (click)="addCategory()" class="btn btn-primary" [disabled]="!newCategory.trim()">
+          Add
+        </button>
+      </div>
+    </div>
+
+    <!-- Categories List -->
+    <div class="categories-list">
+      <div *ngFor="let category of categories" class="card">
+        <div class="category-header">
+          <!-- Edit Mode -->
+          <div *ngIf="editingId === category._id" class="edit-group">
+            <input type="text" [(ngModel)]="editingName" class="input-field" />
+            <button
+              (click)="saveCategory(category._id)"
+              class="btn-icon btn-success"
+              [disabled]="!editingName.trim()"
+            >
+              ✓
+            </button>
+            <button (click)="cancelEdit()" class="btn-icon btn-cancel">✕</button>
+          </div>
+
+          <!-- View Mode -->
+          <div *ngIf="editingId !== category._id" class="category-title-row">
+            <h3>{{ category.name }}</h3>
+            <div class="btn-group">
+              <button (click)="startEditCategory(category)" class="btn-icon btn-edit">✎</button>
+              <button (click)="deleteCategory(category._id)" class="btn-icon btn-delete">
+                🗑
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subcategories -->
+        <div class="subcategories">
+          <h4>Subcategories:</h4>
+          <div
+            class="subcategory-list"
+            *ngIf="getCategorySubcategories(category._id).length > 0"
+          >
+            <div
+              *ngFor="let sub of getCategorySubcategories(category._id)"
+              class="subcategory-item"
+            >
+              <!-- Edit Mode -->
+              <div *ngIf="editingSubId === sub._id" class="edit-group-sub">
+                <input type="text" [(ngModel)]="editingSubName" class="input-field-small" />
+                <button
+                  (click)="saveSubcategory(sub._id)"
+                  class="btn-icon-small btn-success"
+                  [disabled]="!editingSubName.trim()"
+                >
+                  ✓
+                </button>
+                <button (click)="cancelSubEdit()" class="btn-icon-small btn-cancel">✕</button>
+              </div>
+
+              <!-- View Mode -->
+              <div *ngIf="editingSubId !== sub._id" class="subcategory-view">
+                <span>{{ sub.name }}</span>
+                <div class="btn-group-small">
+                  <button
+                    (click)="startEditSubcategory(sub)"
+                    class="btn-icon-small btn-edit"
+                  >
+                    ✎
+                  </button>
+                  <button (click)="deleteSubcategory(sub._id)" class="btn-icon-small btn-delete">
+                    🗑
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No Subcategories Message -->
+          <p class="no-subcategories" *ngIf="getCategorySubcategories(category._id).length === 0">
+            No subcategories yet
+          </p>
+
+          <!-- Add Subcategory -->
+          <div *ngIf="selectedCategoryId === category._id" class="add-sub-group">
+            <input
+              type="text"
+              [(ngModel)]="newSubcategory"
+              (keypress)="onKeyPress($event, 'subcategory', category._id)"
+              placeholder="Enter subcategory name"
+              class="input-field-small"
+            />
+            <button
+              (click)="addSubcategory(category._id)"
+              class="btn btn-success-small"
+              [disabled]="!newSubcategory.trim()"
+            >
+              Add
+            </button>
+            <button (click)="cancelAddSubcategory()" class="btn btn-cancel-small">Cancel</button>
+          </div>
+
+          <button
+            *ngIf="selectedCategoryId !== category._id"
+            (click)="showAddSubcategory(category._id)"
+            class="btn-link"
+          >
+            + Add Subcategory
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="categories.length === 0" class="empty-state">
+      <div class="empty-icon">📁</div>
+      <p>No categories yet. Add your first category above!</p>
+    </div>
+  </div>
+</div>

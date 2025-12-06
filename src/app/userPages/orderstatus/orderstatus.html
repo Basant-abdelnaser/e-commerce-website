@@ -1,0 +1,298 @@
+<div class="order-tracking-page">
+  <div class="container">
+    <!-- Orders List -->
+    <div class="orders-section">
+      <div class="section-header">
+        <h2>My Orders</h2>
+        <div class="header-actions">
+          <p>{{ orders.length }} total orders</p>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-container" *ngIf="isLoading">
+        <div class="loading-spinner"></div>
+        <p>Loading your orders...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-container" *ngIf="errorMessage && !isLoading">
+        <p class="error-message">{{ errorMessage }}</p>
+        <button class="btn-retry" (click)="loadUserOrders()">Try Again</button>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!isLoading && !errorMessage && orders.length === 0">
+        <div class="empty-icon">📦</div>
+        <h3>No Orders Yet</h3>
+        <p>You haven't placed any orders yet. Start shopping to see your orders here!</p>
+        <button class="btn-shop" routerLink="/products">Start Shopping</button>
+      </div>
+
+      <!-- Orders Grid -->
+      <div class="orders-grid" *ngIf="!isLoading && !errorMessage && orders.length > 0">
+        <div class="order-card" *ngFor="let order of orders">
+          <!-- Order Header -->
+          <div class="order-header">
+            <div class="order-info">
+              <h3>{{ order.orderNumber }}</h3>
+              <p class="order-date">Placed on {{ order.date }}</p>
+            </div>
+            <div class="order-status" [style.background-color]="getStatusInfo(order.status).color">
+              <span class="status-icon">{{ getStatusInfo(order.status).icon }}</span>
+              <span>{{ getStatusInfo(order.status).label }}</span>
+            </div>
+          </div>
+
+          <!-- Order Items Preview -->
+          <div class="order-items-preview">
+            <div class="item-preview" *ngFor="let item of order.items.slice(0, 3)">
+              <!-- <span class="item-emoji">{{ item.image }}</span> -->
+              <img [src]="item.image" alt="" width="50px" />
+              <div class="item-info">
+                <p class="item-name">{{ item.name }}</p>
+                <p class="item-quantity">Qty: {{ item.quantity }}</p>
+              </div>
+            </div>
+            <p class="more-items" *ngIf="order.items.length > 3">
+              +{{ order.items.length - 3 }} more items
+            </p>
+          </div>
+
+          <!-- Order Details -->
+          <div class="order-details-preview">
+            <div class="detail-row">
+              <span>Total:</span> <strong>${{ order.total.toFixed(2) }}</strong>
+            </div>
+            <div class="detail-row">
+              <span>Delivery by:</span> <strong>{{ order.estimatedDelivery }}</strong>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div
+            class="progress-bar-container"
+            *ngIf="
+              order.status !== 'canceled' &&
+              order.status !== 'refused' &&
+              order.status !== 'returned' &&
+              order.status !== 'refunded'
+            "
+          >
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                [style.width.%]="getProgressPercentage(order.status)"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="order-actions">
+            <button class="btn-view" (click)="viewOrderDetails(order)">View Details</button>
+            <button
+              class="btn-cancel"
+              *ngIf="canCancelOrder(order)"
+              (click)="openCancelModal(order)"
+            >
+              Cancel Order
+            </button>
+            <button
+              class="btn-track"
+              *ngIf="order.trackingNumber"
+              (click)="trackOrder(order.trackingNumber!)"
+            >
+              Track Package
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal-overlay" *ngIf="selectedOrder && !showCancelModal" (click)="closeOrderDetails()">
+  <div class="modal-content order-details-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <h2>{{ selectedOrder.orderNumber }}</h2>
+        <p class="modal-subtitle">Order Details</p>
+      </div>
+      <button class="close-btn" (click)="closeOrderDetails()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Current Status -->
+      <div class="detail-section">
+        <div
+          class="status-badge-large"
+          [style.background-color]="getStatusInfo(selectedOrder.status).color"
+        >
+          <span class="status-icon-large">{{ getStatusInfo(selectedOrder.status).icon }}</span>
+          <div>
+            <h3>{{ getStatusInfo(selectedOrder.status).label }}</h3>
+            <p>Current Status</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div
+        class="detail-section"
+        *ngIf="
+          selectedOrder.status !== 'canceled' &&
+          selectedOrder.status !== 'refused' &&
+          selectedOrder.status !== 'returned' &&
+          selectedOrder.status !== 'refunded'
+        "
+      >
+        <h3>Order Timeline</h3>
+        <div class="timeline">
+          <div
+            class="timeline-step"
+            *ngFor="let step of getTimelineSteps(selectedOrder.status)"
+            [class.active]="step.isActive"
+            [class.completed]="step.isCompleted"
+          >
+            <div class="timeline-icon">{{ step.icon }}</div>
+            <div class="timeline-content">
+              <p class="timeline-label">{{ step.label }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <div class="detail-section">
+        <h3>Order Items</h3>
+        <div class="order-items-list">
+          <div class="order-item" *ngFor="let item of selectedOrder.items">
+            <!-- <span class="item-emoji-large">{{ item.image }}</span> -->
+            <img [src]="item.image" width="50px" alt="" />
+            <div class="item-details">
+              <h4>{{ item.name }}</h4>
+              <p>Quantity: {{ item.quantity }}</p>
+              <p class="item-price">${{ item.price.toFixed(2) }} each</p>
+            </div>
+            <div class="item-total">${{ (item.price * item.quantity).toFixed(2) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Information -->
+      <div class="detail-section">
+        <h3>Shipping Information</h3>
+        <div class="info-box">
+          <div class="info-row">
+            <span class="info-label">Address:</span>
+            <span>{{ selectedOrder.shippingAddress }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Phone:</span>
+            <span>{{ selectedOrder.phone }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Estimated Delivery:</span>
+            <span>{{ selectedOrder.estimatedDelivery }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedOrder.trackingNumber">
+            <span class="info-label">Tracking Number:</span>
+            <span class="tracking-number">{{ selectedOrder.trackingNumber }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="detail-section">
+        <h3>Order Summary</h3>
+        <div class="summary-box">
+          <div class="summary-row">
+            <span>Subtotal:</span>
+            <strong>${{ selectedOrder.total.toFixed(2) }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Shipping:</span>
+            <strong>$50.00</strong>
+          </div>
+          <div class="summary-row">
+            <span>Tax (10%):</span>
+            <strong>${{ (selectedOrder.total * 0.1).toFixed(2) }}</strong>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-row summary-total">
+            <span>Total Amount:</span>
+            <strong
+              >${{ (selectedOrder.total + 50 + selectedOrder.total * 0.1).toFixed(2) }}</strong
+            >
+          </div>
+          <div class="summary-row">
+            <span>Order Date:</span>
+            <strong>{{ selectedOrder.date }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refund Information -->
+      <div class="detail-section" *ngIf="selectedOrder.refundAllowedTill">
+        <div class="info-box refund-info">
+          <h4>⏰ Refund Available</h4>
+          <p>
+            You can request a refund until {{ selectedOrder.refundAllowedTill | date : 'medium' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="modal-actions">
+        <button
+          class="btn-cancel-order"
+          *ngIf="canCancelOrder(selectedOrder)"
+          (click)="openCancelModal(selectedOrder)"
+        >
+          ❌ Cancel Order
+        </button>
+        <!-- <button class="btn-reorder" (click)="reorder(selectedOrder)">🔄 Reorder</button>
+        <button class="btn-support" (click)="contactSupport(selectedOrder)">
+          💬 Contact Support
+        </button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="modal-overlay" *ngIf="showCancelModal" (click)="closeCancelModal()">
+  <div class="modal-content cancel-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>⚠️ Cancel Order</h2>
+      <button class="close-btn" (click)="closeCancelModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="cancel-warning">
+        <p>
+          Are you sure you want to cancel order <strong>{{ selectedOrder?.orderNumber }}</strong
+          >?
+        </p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Reason for Cancellation *</label>
+        <textarea
+          [(ngModel)]="cancelReason"
+          placeholder="Please tell us why you're canceling this order..."
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-keep" (click)="closeCancelModal()">Keep Order</button>
+        <button class="btn-confirm-cancel" (click)="confirmCancelOrder()">
+          Confirm Cancellation
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

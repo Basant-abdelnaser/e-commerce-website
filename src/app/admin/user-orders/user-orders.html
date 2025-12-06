@@ -1,0 +1,164 @@
+<div class="container">
+  <div class="header-section">
+    <h1>Order Management</h1>
+    <!-- <button class="btn-refresh" (click)="refreshOrders()" [disabled]="isLoading">
+      🔄 Refresh Orders
+    </button> -->
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading orders...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <p class="error-message">{{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadAllOrders()">Try Again</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <!-- Status Filter Tabs -->
+    <div class="tabs">
+      <button
+        *ngFor="let status of orderStatuses"
+        class="tab"
+        [class.active]="filterStatus === status"
+        (click)="changeStatusFilter(status)"
+      >
+        {{ status | uppercase }}
+        <span class="tab-count">{{ getOrderCountByStatus(status) }}</span>
+      </button>
+    </div>
+
+    <!-- Orders List -->
+    <div class="orders-list">
+      <div *ngFor="let order of getPaginatedOrders()" class="order-card">
+        <!-- Order Header -->
+        <div class="order-header">
+          <div class="order-info">
+            <h2>Order #{{ order.orderNumber }}</h2>
+            <span class="order-date">📅 {{ order.orderDate }}</span>
+          </div>
+          <div class="order-amount">${{ order.totalAmount.toFixed(2) }}</div>
+        </div>
+
+        <!-- User Details -->
+        <div class="user-section">
+          <h3>Customer Information</h3>
+          <div class="user-details">
+            <div class="detail-row">
+              <span class="detail-label">👤 Name:</span>
+              <span class="detail-value">{{ order.userName }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">📧 Email:</span>
+              <span class="detail-value">{{ order.userEmail }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">📱 Phone:</span>
+              <span class="detail-value">{{ order.userPhone }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">📍 Address:</span>
+              <span class="detail-value">{{ order.userAddress }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="items-section">
+          <h3>Order Items</h3>
+          <div class="items-grid">
+            <div *ngFor="let item of order.items" class="item-card">
+              <div class="item-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-quantity">Qty: {{ item.quantity }}</span>
+              </div>
+              <span class="item-price">${{ item.price.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Management -->
+        <div class="status-section">
+          <div class="current-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge" [ngClass]="'status-' + order.status">
+              {{ order.status | uppercase }}
+            </span>
+          </div>
+
+          <div class="status-change">
+            <label>Change Status:</label>
+            <select
+              [value]="order.status"
+              (change)="updateOrderStatus(order, $any($event.target).value)"
+              class="status-select"
+            >
+              <option *ngFor="let status of orderStatuses" [value]="status">
+                {{ status | uppercase }}
+              </option>
+            </select>
+          </div>
+
+
+
+        <!-- Additional Info -->
+        <div class="additional-info" *ngIf="order.refundAllowedTill">
+          <span class="info-badge">
+            ⏰ Refund allowed until: {{ order.refundAllowedTill | date : 'short' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="getFilteredOrders().length === 0" class="empty-state">
+        <div class="empty-icon">📦</div>
+        <p>
+          No orders with status: <strong>{{ filterStatus | uppercase }}</strong>
+        </p>
+        <p class="empty-subtitle">Orders with this status will appear here</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="getFilteredOrders().length > 0">
+      <button
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="pagination-btn"
+      >
+        ← Previous
+      </button>
+
+      <div class="pagination-pages">
+        <button
+          *ngFor="let page of getPageNumbers()"
+          (click)="page > 0 ? goToPage(page) : null"
+          [class.active]="currentPage === page"
+          [class.ellipsis]="page === -1"
+          [disabled]="page === -1"
+          class="pagination-page"
+        >
+          {{ page > 0 ? page : '...' }}
+        </button>
+      </div>
+
+      <button
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === getTotalPages()"
+        class="pagination-btn"
+      >
+        Next →
+      </button>
+    </div>
+
+    <!-- Pagination Info -->
+    <div class="pagination-info" *ngIf="getFilteredOrders().length > 0">
+      Showing <strong>{{ getStartIndex() + 1 }}</strong> to <strong>{{ getEndIndex() }}</strong> of
+      <strong>{{ getFilteredOrders().length }}</strong> orders
+    </div>
+  </div>
+</div>

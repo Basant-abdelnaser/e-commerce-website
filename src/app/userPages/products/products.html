@@ -1,0 +1,181 @@
+<div class="products-page">
+  <!-- HEADER -->
+  <header class="main-header">
+    <div class="container header-container">
+      <!-- Logo -->
+      <div class="logo" (click)="goHome()">
+        <span>Fashion Store</span>
+      </div>
+      <div>
+        <a (click)="goToOrders()" class="my-orders">my orders</a>
+      </div>
+      <!-- Cart Icon -->
+      <div class="cart-icon" (click)="goToCart()">
+        <i class="bi bi-cart"></i>
+        <span class="cart-count" *ngIf="">{{ cartCount }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filters Section -->
+  <section class="filters-section">
+    <div class="container">
+      <div class="filters-card">
+        <!-- Category Filter -->
+        <div class="filter-group">
+          <h3><i class="bi bi-funnel"></i> Category</h3>
+          <div class="filter-buttons">
+            <button
+              class="filter-btn"
+              [class.active]="selectedCategory === 'all'"
+              (click)="selectCategory('all')"
+            >
+              All Categories
+            </button>
+
+            <button
+              *ngFor="let cat of categories"
+              class="filter-btn"
+              [class.active]="selectedCategory === cat._id"
+              (click)="selectCategory(cat._id)"
+            >
+              {{ cat.name }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Subcategory Filter - Only show when category is selected -->
+        <div class="filter-group" *ngIf="selectedCategory !== 'all' && subcategories.length > 0">
+          <h3><i class="bi bi-tags"></i> Subcategory</h3>
+          <div class="filter-buttons subcategory-buttons">
+            <button
+              class="filter-btn"
+              [class.active]="selectedSubcategory === 'all'"
+              (click)="selectSubcategory('all')"
+            >
+              All Subcategories
+            </button>
+
+            <button
+              *ngFor="let sub of subcategories"
+              class="filter-btn"
+              [class.active]="selectedSubcategory === sub._id"
+              (click)="selectSubcategory(sub._id)"
+            >
+              {{ sub.name }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Filters Display -->
+        <div
+          class="active-filters"
+          *ngIf="selectedCategory !== 'all' || selectedSubcategory !== 'all'"
+        >
+          <span class="filter-label">Active Filters:</span>
+          <span class="filter-tag" *ngIf="selectedCategory !== 'all'">
+            Category: {{ getCategoryName(selectedCategory) }}
+            <i class="bi bi-x-circle" (click)="selectCategory('all')"></i>
+          </span>
+          <span class="filter-tag" *ngIf="selectedSubcategory !== 'all'">
+            Subcategory: {{ getSubcategoryName(selectedSubcategory) }}
+            <i class="bi bi-x-circle" (click)="selectSubcategory('all')"></i>
+          </span>
+        </div>
+
+        <!-- Results Count -->
+        <div class="results-count">
+          <i class="bi bi-bag-check"></i>
+          Showing <strong>{{ products.length }}</strong> products on this page
+          <span *ngIf="totalProducts > products.length"> ({{ totalProducts }} total) </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Grid -->
+  <section class="products-section">
+    <div class="container">
+      <!-- Products Grid -->
+      <div class="products-grid" *ngIf="products.length > 0">
+        <div class="product-card" *ngFor="let product of products">
+          <div class="product-image">
+            <img [src]="product.image" [alt]="product.name" />
+            <div class="product-badge" *ngIf="product.category">
+              {{ product.category?.name }}
+            </div>
+          </div>
+
+          <div class="product-info">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-category" *ngIf="product.subcategory">
+              <i class="bi bi-tag"></i> {{ product.subcategory?.name }}
+            </p>
+
+            <div class="product-footer">
+              <span class="price">\${{ product.price }}</span>
+              <button class="add-to-cart" (click)="addToCart(product)">
+                <i class="bi bi-cart-plus"></i> Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Products Message -->
+      <div class="no-products" *ngIf="products.length === 0">
+        <i class="bi bi-emoji-frown"></i>
+        <h3>No products found</h3>
+        <p>Try adjusting your filters or browse all products</p>
+        <button class="reset-btn" (click)="selectCategory('all')">
+          <i class="bi bi-arrow-clockwise"></i> Reset Filters
+        </button>
+      </div>
+
+      <!-- PAGINATION - Enhanced -->
+      <div class="pagination-container" *ngIf="products.length > 0 && totalPages > 1">
+        <div class="pagination">
+          <!-- Previous Button -->
+          <button
+            (click)="prevPage()"
+            [disabled]="page === 1"
+            class="pagination-btn prev-btn"
+            title="Previous Page"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+
+          <!-- Page Numbers -->
+          <div class="page-numbers">
+            <button
+              *ngFor="let pageNum of getPageNumbers()"
+              [class.active]="pageNum === page"
+              [class.ellipsis]="pageNum === -1"
+              [disabled]="pageNum === -1"
+              (click)="pageNum !== -1 && goToPage(pageNum)"
+              class="page-btn"
+            >
+              {{ pageNum === -1 ? '...' : pageNum }}
+            </button>
+          </div>
+
+          <!-- Next Button -->
+          <button
+            (click)="nextPage()"
+            [disabled]="page === totalPages"
+            class="pagination-btn next-btn"
+            title="Next Page"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+
+        <!-- Pagination Info -->
+        <div class="pagination-info">
+          Page <strong>{{ page }}</strong> of <strong>{{ totalPages }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<app-testmonials></app-testmonials>

@@ -1,0 +1,58 @@
+<section class="testimonials-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>What Our Customers Say</h2>
+      <button class="add-testimonial-btn" (click)="openTestimonialForm()">
+        ➕ Add Your Review
+      </button>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card" *ngFor="let testimonial of testimonials">
+        <div class="testimonial-header">
+          <div class="testimonial-avatar">{{ testimonial.user.name[0] | uppercase }}</div>
+          <div class="testimonial-info">
+            <h4>{{ testimonial.user.name }}</h4>
+            <div class="testimonial-rating">
+              <span *ngFor="let star of getStars(testimonial.rating)" class="star">{{ star }}</span>
+            </div>
+          </div>
+        </div>
+        <p class="testimonial-comment">{{ testimonial.message }}</p>
+        <span class="testimonial-date">{{ testimonial.createdAt | date : 'fullDate' }}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonial Form Modal -->
+<div class="modal-overlay" *ngIf="showTestimonialForm" (click)="closeTestimonialForm()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Share Your Experience</h3>
+      <button class="close-btn" (click)="closeTestimonialForm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Rating</label>
+        <div class="rating-selector">
+          <button
+            *ngFor="let i of [1, 2, 3, 4, 5]"
+            [class.active]="i <= newTestimonial.rating"
+            (click)="newTestimonial.rating = i"
+          >
+            ★
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Your Review</label>
+        <textarea
+          [(ngModel)]="newTestimonial.message"
+          placeholder="Share your thoughts about our products..."
+          rows="4"
+        ></textarea>
+      </div>
+      <button class="submit-btn" (click)="submitTestimonial()">Submit Review</button>
+    </div>
+  </div>
+</div>

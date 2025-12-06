@@ -1,0 +1,129 @@
+<div class="cart-page">
+  <!-- Header -->
+  <header class="cart-header">
+    <div class="container">
+      <h1>🛒 Shopping Cart</h1>
+      <p *ngIf="cartItems.length > 0">You have {{ getTotalItems() }} item(s) in your cart</p>
+      <p *ngIf="cartItems.length === 0">Your cart is empty</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="cart-layout">
+      <!-- Cart Items Section -->
+      <div class="cart-items-section">
+        <div class="section-header">
+          <h2>Cart Items</h2>
+          <button class="clear-cart-btn" *ngIf="cartItems.length > 0" (click)="clearCart()">
+            🗑️ Clear Cart
+          </button>
+        </div>
+
+        <!-- Empty Cart Message -->
+        <div class="empty-cart" *ngIf="cartItems.length === 0">
+          <div class="empty-cart-icon">🛍️</div>
+          <h3>Your cart is empty</h3>
+          <p>Add some products to get started!</p>
+          <button class="continue-shopping-btn">Continue Shopping</button>
+        </div>
+
+        <!-- Cart Items List -->
+        <div class="cart-items-list" *ngIf="cartItems.length > 0">
+          <div class="cart-item" *ngFor="let item of cartItems">
+            <div class="item-image">
+              <img [src]="item.product.image" alt="" />
+            </div>
+
+            <div class="item-details">
+              <h3>{{ item.product.name }}</h3>
+              <p class="item-category">
+                <!-- {{ item.product.subcategory | titlecase }} -
+                {{ item.product.category | titlecase }} -->
+              </p>
+              <p class="item-price">${{ item.product.price }} each</p>
+            </div>
+
+            <div class="item-quantity">
+              <label>Quantity</label>
+              <div class="quantity-controls">
+                <button
+                  class="quantity-btn"
+                  (click)="decreaseQuantity(item)"
+                  [disabled]="item.quantity <= 1"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  [value]="item.quantity"
+                  (change)="updateQuantity(item, $event)"
+                  min="1"
+                  class="quantity-input"
+                />
+                <button class="quantity-btn" (click)="increaseQuantity(item)">+</button>
+              </div>
+            </div>
+
+            <div class="item-subtotal">
+              <label>Subtotal</label>
+              <p class="subtotal-price">${{ getItemSubtotal(item).toFixed(2) }}</p>
+            </div>
+
+            <button class="remove-btn" (click)="removeItem(item)">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary Section -->
+      <div class="order-summary-section" *ngIf="cartItems.length > 0">
+        <div class="order-summary-card">
+          <h2>Order Summary</h2>
+
+          <div class="summary-row">
+            <span>Subtotal ({{ getTotalItems() }} items)</span>
+            <span class="summary-value">${{ getCartTotal().toFixed(2) }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Tax (10%)</span>
+            <span class="summary-value">${{ getTax().toFixed(2) }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span class="summary-value">
+              <span *ngIf="getShipping() === 0" class="free-shipping">FREE</span>
+              <span *ngIf="getShipping() > 0">${{ getShipping().toFixed(2) }}</span>
+            </span>
+          </div>
+
+          <div class="free-shipping-notice" *ngIf="getShipping() > 0 && getCartTotal() < 200">
+            💡 Add ${{ (200 - getCartTotal()).toFixed(2) }} more for FREE shipping!
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row total-row">
+            <span>Total</span>
+            <span class="total-value">${{ getFinalTotal().toFixed(2) }}</span>
+          </div>
+
+          <button class="checkout-btn" (click)="checkout()">Proceed to Checkout</button>
+
+          <button class="continue-shopping-btn-outline" (click)="goHome()">
+            Continue Shopping
+          </button>
+
+          <div class="payment-methods">
+            <p>We accept:</p>
+            <div class="payment-icons">
+              <span>💳</span>
+              <span>💰</span>
+              <span>📱</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

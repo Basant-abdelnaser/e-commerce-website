@@ -1,0 +1,75 @@
+<div class="container">
+  <h1>Testimonial Manager</h1>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab" [class.active]="activeTab === 'pending'" (click)="activeTab = 'pending'">
+      Pending ({{ getPendingCount() }})
+    </button>
+    <button class="tab" [class.active]="activeTab === 'approved'" (click)="activeTab = 'approved'">
+      Approved ({{ getApprovedCount() }})
+    </button>
+  </div>
+
+  <!-- Testimonials List -->
+  <div class="testimonials-list">
+    <div
+      *ngFor="let testimonial of getFilteredTestimonials()"
+      class="testimonial-card"
+      [class.approved]="testimonial.newFlag === false"
+    >
+      <div class="testimonial-header">
+        <div class="user-info">
+          <div class="avatar">
+            {{ testimonial?.user?.name?.[0] | uppercase }}
+          </div>
+
+          <div>
+            <h3>{{ testimonial?.user?.name }}</h3>
+            <p class="email">{{ testimonial?.user?.email }}</p>
+            <p class="date">{{ testimonial?.createdAt | date : 'fullDate' }}</p>
+          </div>
+        </div>
+
+        <div class="rating">
+          <span
+            *ngFor="let star of [1, 2, 3, 4, 5]"
+            class="star"
+            [class.filled]="star <= testimonial.rating"
+          >
+            ★
+          </span>
+        </div>
+      </div>
+
+      <div class="testimonial-body">
+        <p>{{ testimonial.message }}</p>
+      </div>
+
+      <div class="testimonial-actions">
+        <span class="status-badge" [class.approved]="testimonial.newFlag === false">
+          {{ testimonial.newFlag ? "PENDING" : "APPROVED" }}
+        </span>
+
+        <div class="action-buttons">
+          <button
+            *ngIf="testimonial.newFlag === true"
+            (click)="approveTestimonial(testimonial._id)"
+            class="btn btn-approve"
+          >
+            ✓ Approve
+          </button>
+
+          <button (click)="rejectTestimonial(testimonial._id)" class="btn btn-reject">
+            ✕ {{ testimonial.newFlag === false ? 'Remove' : 'Reject' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="getFilteredTestimonials().length === 0" class="empty-state">
+      <p>No {{ activeTab }} testimonials</p>
+    </div>
+  </div>
+</div>
