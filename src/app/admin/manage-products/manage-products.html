@@ -1,1 +1,374 @@
-<p>manage-products works!</p>
+<div class="container">
+  <div class="header-section">
+    <h1>Product Management</h1>
+    <button class="btn-add" (click)="openAddModal()">
+      <i class="bi bi-plus-circle"></i> Add New Product
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading products...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <p class="error-message">{{ errorMessage }}</p>
+    <button class="btn-retry" (click)="loadProducts()">Try Again</button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <!-- Filters -->
+    <div class="filters-section">
+      <div class="search-bar">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="🔍 Search products by name..."
+          class="search-input"
+        />
+      </div>
+
+      <div class="filter-buttons">
+        <button
+          class="filter-btn"
+          [class.active]="selectedCategory === 'all'"
+          (click)="onCategoryFilter('all')"
+        >
+          All Categories
+        </button>
+        <button
+          *ngFor="let cat of categories"
+          class="filter-btn"
+          [class.active]="selectedCategory === cat._id"
+          (click)="onCategoryFilter(cat._id)"
+        >
+          {{ cat.name }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="table-container">
+      <table class="products-table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Subcategory</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of products">
+            <td>
+              <img [src]="product.image" [alt]="product.name" class="product-thumbnail" />
+            </td>
+            <td>
+              <div class="product-name-cell">
+                <strong>{{ product.name }}</strong>
+                <small>{{ product.description | slice : 0 : 50 }}...</small>
+              </div>
+            </td>
+            <td>{{ product.category?.name || 'N/A' }}</td>
+            <td>{{ product.subcategory?.name || 'N/A' }}</td>
+            <td class="price-cell">${{ product.price.toFixed(2) }}</td>
+            <td>
+              <span class="stock-badge" [class.low-stock]="product.stock < 10">
+                {{ product.stock }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="status-badge"
+                [class.active]="product.isActive"
+                [class.inactive]="!product.isActive"
+              >
+                {{ product.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-edit" (click)="openEditModal(product)" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-delete" (click)="deleteProduct(product)" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Empty State -->
+      <div *ngIf="products.length === 0" class="empty-state">
+        <i class="bi bi-box-seam"></i>
+        <h3>No products found</h3>
+        <p>Try adjusting your filters or add a new product</p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="products.length > 0 && getTotalPages() > 1">
+      <button
+        (click)="goToPage(currentPage - 1)"
+        [disabled]="currentPage === 1"
+        class="pagination-btn"
+      >
+        ← Previous
+      </button>
+
+      <div class="pagination-pages">
+        <button
+          *ngFor="let page of getPageNumbers()"
+          (click)="page > 0 && goToPage(page)"
+          [class.active]="currentPage === page"
+          [class.ellipsis]="page === -1"
+          [disabled]="page === -1"
+          class="page-btn"
+        >
+          {{ page === -1 ? '...' : page }}
+        </button>
+      </div>
+
+      <button
+        (click)="goToPage(currentPage + 1)"
+        [disabled]="currentPage === getTotalPages()"
+        class="pagination-btn"
+      >
+        Next →
+      </button>
+    </div>
+
+    <!-- Pagination Info -->
+    <div class="pagination-info" *ngIf="products.length > 0">
+      Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to
+      {{ min(currentPage * itemsPerPage, totalProducts) }} of {{ totalProducts }} products
+    </div>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add New Product</h2>
+      <button class="close-btn" (click)="closeAddModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form>
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Product Name *</label>
+            <input
+              type="text"
+              [(ngModel)]="productForm.name"
+              name="name"
+              placeholder="Enter product name"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Description *</label>
+            <textarea
+              [(ngModel)]="productForm.description"
+              name="description"
+              rows="3"
+              placeholder="Enter product description"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price *</label>
+            <input
+              type="number"
+              [(ngModel)]="productForm.price"
+              name="price"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Stock *</label>
+            <input
+              type="number"
+              [(ngModel)]="productForm.stock"
+              name="stock"
+              min="0"
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select
+              [(ngModel)]="productForm.category"
+              name="category"
+              (change)="onCategoryChange()"
+            >
+              <option value="">Select Category</option>
+              <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Subcategory</label>
+            <select
+              [(ngModel)]="productForm.subcategory"
+              name="subcategory"
+              [disabled]="!productForm.category"
+            >
+              <option value="">Select Subcategory</option>
+              <option *ngFor="let sub of filteredSubcategories" [value]="sub._id">
+                {{ sub.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Product Image *</label>
+          <input
+            type="file"
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            class="file-input"
+          />
+          <div class="image-preview" *ngIf="imagePreview">
+            <img [src]="imagePreview" alt="Preview" />
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeAddModal()">Cancel</button>
+      <button class="btn-save" (click)="addProduct()">Add Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Edit Product</h2>
+      <button class="close-btn" (click)="closeEditModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form>
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Product Name *</label>
+            <input
+              type="text"
+              [(ngModel)]="productForm.name"
+              name="name"
+              placeholder="Enter product name"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group full-width">
+            <label>Description *</label>
+            <textarea
+              [(ngModel)]="productForm.description"
+              name="description"
+              rows="3"
+              placeholder="Enter product description"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price *</label>
+            <input
+              type="number"
+              [(ngModel)]="productForm.price"
+              name="price"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Stock *</label>
+            <input
+              type="number"
+              [(ngModel)]="productForm.stock"
+              name="stock"
+              min="0"
+              placeholder="0"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category *</label>
+            <select
+              [(ngModel)]="productForm.category"
+              name="category"
+              (change)="onCategoryChange()"
+            >
+              <option value="">Select Category</option>
+              <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Subcategory</label>
+            <select
+              [(ngModel)]="productForm.subcategory"
+              name="subcategory"
+              [disabled]="!productForm.category"
+            >
+              <option value="">Select Subcategory</option>
+              <option *ngFor="let sub of filteredSubcategories" [value]="sub._id">
+                {{ sub.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label>Product Image (Optional - leave empty to keep current image)</label>
+          <input
+            type="file"
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            class="file-input"
+          />
+          <div class="image-preview" *ngIf="imagePreview">
+            <img [src]="imagePreview" alt="Preview" />
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeEditModal()">Cancel</button>
+      <button class="btn-save" (click)="updateProduct()">Save Changes</button>
+    </div>
+  </div>
+</div>

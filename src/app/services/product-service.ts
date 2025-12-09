@@ -11,13 +11,38 @@ export class ProductService {
   getProducts(params?: any): Observable<any> {
     return this.http.get(this.apiUrl, { params });
   }
-  deleteProduct(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}${id}`);
-  }
   addProduct(data: any): Observable<any> {
-    return this.http.post(this.apiUrl, data);
+    const token = this.getToken();
+    return this.http.post(this.apiUrl, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+  deleteProduct(id: string): Observable<any> {
+    const token = this.getToken();
+    return this.http.delete(`${this.apiUrl}/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   }
   updateProduct(id: string, data: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}${id}`, data);
+    const token = this.getToken();
+    return this.http.put(`${this.apiUrl}/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
+  getProductBySlug(slug: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${slug}`);
+  }
+
+  getToken() {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token');
+    }
+    return null;
   }
 }

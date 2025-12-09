@@ -1,0 +1,167 @@
+<div class="product-detail-page">
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="loading-spinner"></div>
+    <p>Loading product...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <i class="bi bi-exclamation-circle"></i>
+    <h2>{{ errorMessage }}</h2>
+    <p>The product you're looking for doesn't exist or has been removed.</p>
+    <button class="btn-back" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i> Back to Products
+    </button>
+  </div>
+
+  <!-- Product Detail -->
+  <div class="container" *ngIf="product && !isLoading">
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <span (click)="goBack()" class="breadcrumb-link">Products</span>
+      <i class="bi bi-chevron-right"></i>
+      <span *ngIf="product.category" (click)="goBack()" class="breadcrumb-link">
+        {{ product.category.name }}
+      </span>
+      <i class="bi bi-chevron-right" *ngIf="product.category"></i>
+      <span class="breadcrumb-current">{{ product.name }}</span>
+    </div>
+
+    <!-- Product Content -->
+    <div class="product-content">
+      <!-- Product Image -->
+      <div class="product-image-section">
+        <div class="main-image">
+          <img [src]="product.image" [alt]="product.name" />
+          <div class="image-badge" *ngIf="product.category">
+            {{ product.category.name }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-info-section">
+        <h1 class="product-title">{{ product.name }}</h1>
+
+        <!-- Category & Subcategory -->
+        <div class="product-categories">
+          <span class="category-tag" *ngIf="product.category">
+            <i class="bi bi-bookmark"></i> {{ product.category.name }}
+          </span>
+          <span class="subcategory-tag" *ngIf="product.subcategory">
+            <i class="bi bi-tag"></i> {{ product.subcategory.name }}
+          </span>
+        </div>
+
+        <!-- Price -->
+        <div class="product-price">
+          <span class="current-price">${{ product.price.toFixed(2) }}</span>
+        </div>
+
+        <!-- Stock Status -->
+        <div class="stock-status" [ngClass]="getStockClass()">
+          <i class="bi" [ngClass]="{
+            'bi-check-circle': !isOutOfStock() && product.stock >= 10,
+            'bi-exclamation-circle': product.stock < 10 && product.stock > 0,
+            'bi-x-circle': isOutOfStock()
+          }"></i>
+          {{ getStockStatus() }}
+        </div>
+
+        <!-- Description -->
+        <div class="product-description">
+          <h3>Description</h3>
+          <p>{{ product.description }}</p>
+        </div>
+
+        <!-- Quantity Selector -->
+        <div class="quantity-section" *ngIf="!isOutOfStock()">
+          <label>Quantity:</label>
+          <div class="quantity-selector">
+            <button
+              class="qty-btn"
+              (click)="decreaseQuantity()"
+              [disabled]="quantity <= 1"
+            >
+              <i class="bi bi-dash"></i>
+            </button>
+            <input
+              type="number"
+              [(ngModel)]="quantity"
+              min="1"
+              [max]="product.stock"
+              class="qty-input"
+              readonly
+            />
+            <button
+              class="qty-btn"
+              (click)="increaseQuantity()"
+              [disabled]="quantity >= product.stock"
+            >
+              <i class="bi bi-plus"></i>
+            </button>
+          </div>
+          <span class="quantity-note">Maximum: {{ product.stock }} available</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+          <button
+            class="btn-add-to-cart"
+            (click)="addToCart()"
+            [disabled]="isOutOfStock() || addingToCart"
+          >
+            <i class="bi" [ngClass]="{
+              'bi-cart-plus': !addingToCart,
+            
+            }"></i>
+            {{ addingToCart ? 'Added' : 'Add to Cart' }}
+          </button>
+          <button
+            class="btn-buy-now"
+            (click)="buyNow()"
+            [disabled]="isOutOfStock()"
+          >
+            <i class="bi bi-lightning"></i> Buy Now
+          </button>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="additional-info">
+          <div class="info-item">
+            <i class="bi bi-truck"></i>
+            <div>
+              <strong>Free Shipping</strong>
+              <p>On orders over $50</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <i class="bi bi-arrow-repeat"></i>
+            <div>
+              <strong>Easy Returns</strong>
+              <p>14-day return policy</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <i class="bi bi-shield-check"></i>
+            <div>
+              <strong>Secure Payment</strong>
+              <p>100% secure transactions</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="navigation-buttons">
+          <button class="btn-back-nav" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i> Continue Shopping
+          </button>
+          <button class="btn-cart-nav" (click)="goToCart()">
+            <i class="bi bi-cart"></i> View Cart
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

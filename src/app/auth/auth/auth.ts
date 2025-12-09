@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth-service';
 import { ChangeDetectorRef } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
+import { CartService } from '../../services/cart-service';
 @Component({
   selector: 'app-auth',
   imports: [FormsModule, CommonModule, RouterModule],
@@ -22,6 +23,7 @@ export class Auth {
   };
   constructor(
     private authService: AuthService,
+    private cartService: CartService,
     private cdr: ChangeDetectorRef,
     private router: Router
   ) {}
@@ -39,6 +41,7 @@ export class Auth {
           this.router.navigate(['/admin/manage-categories']);
         } else {
           console.log('user');
+          this.cartService.mergeLocalCartWithBackend();
           this.router.navigate(['/home']);
         }
       },

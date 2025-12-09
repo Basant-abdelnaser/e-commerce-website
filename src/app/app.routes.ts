@@ -10,6 +10,9 @@ import { UserOrders } from './admin/user-orders/user-orders';
 import { Users } from './admin/users/users';
 import { Admin } from './admin/admin/admin';
 import { ManageProducts } from './admin/manage-products/manage-products';
+import { ProductDetails } from './userPages/product-details/product-details';
+import { AdminGuard } from './guards/admin-guard';
+import { cartGuard } from './guards/cart-guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -18,15 +21,17 @@ export const routes: Routes = [
   { path: 'cart', component: Cart },
   { path: 'checkout', component: Checkout },
   { path: 'trackOrder', component: Orderstatus },
+  { path: 'product/:slug', component: ProductDetails },
   {
     path: 'admin',
     component: Admin,
+    // canActivate: [AdminGuard],
     children: [
       { path: 'manage-categories', component: ManageCategoriesAndSubcategories },
       { path: 'manage-testmonials', component: ManageTestmonials },
       { path: 'user-orders', component: UserOrders },
       { path: 'users', component: Users },
-      {path:'manage-products',component:ManageProducts}
+      { path: 'manage-products', component: ManageProducts },
     ],
   },
 

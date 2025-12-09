@@ -54,12 +54,10 @@ export class Products implements OnInit {
       limit: this.limit,
     };
 
-    // Add category filter if selected
     if (this.selectedCategory !== 'all') {
       params.category = this.selectedCategory;
     }
 
-    // Add subcategory filter if selected
     if (this.selectedSubcategory !== 'all') {
       params.subcategory = this.selectedSubcategory;
     }
@@ -72,8 +70,6 @@ export class Products implements OnInit {
         this.totalPages = res.totalPages || 1;
         this.totalProducts = res.results || 0;
         console.log('Products loaded:', this.products);
-        console.log('Total pages:', this.totalPages);
-        console.log('Current page:', this.page);
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -87,12 +83,9 @@ export class Products implements OnInit {
     this.categoryService.getCatories().subscribe({
       next: (res: any) => {
         this.categories = res.categories || [];
-        console.log('Categories loaded:', this.categories);
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error loading categories:', error);
-      },
+      error: (error) => console.error('Error loading categories:', error),
     });
   }
 
@@ -100,33 +93,25 @@ export class Products implements OnInit {
     this.subcategoryService.getSubcategories().subscribe({
       next: (res: any) => {
         this.allSubcategories = res.subCategories || [];
-        this.subcategories = []; // Start with empty, will populate when category is selected
-        console.log('All Subcategories loaded:', this.allSubcategories);
+        this.subcategories = [];
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error loading subcategories:', error);
-      },
+      error: (error) => console.error('Error loading subcategories:', error),
     });
   }
 
   selectCategory(categoryId: string) {
     this.selectedCategory = categoryId;
-    this.selectedSubcategory = 'all'; // Reset subcategory
-    this.page = 1; // Reset to first page
+    this.selectedSubcategory = 'all';
+    this.page = 1;
 
-    // Filter and show subcategories based on selected category
     if (categoryId === 'all') {
-      this.subcategories = []; // Hide subcategories when "All" is selected
+      this.subcategories = [];
     } else {
-      // Filter subcategories that belong to the selected category
       this.subcategories = this.allSubcategories.filter((sub) => {
-        // Check if sub.category is an object or string ID
         const subCategoryId = typeof sub.category === 'object' ? sub.category?._id : sub.category;
         return subCategoryId === categoryId;
       });
-
-      console.log('Filtered subcategories for category', categoryId, ':', this.subcategories);
     }
 
     this.loadProducts();
@@ -135,9 +120,6 @@ export class Products implements OnInit {
   selectSubcategory(subcategoryId: string) {
     this.selectedSubcategory = subcategoryId;
     this.page = 1;
-
-    console.log('Subcategory selected:', subcategoryId);
-
     this.loadProducts();
   }
 
@@ -167,37 +149,32 @@ export class Products implements OnInit {
 
   getPageNumbers(): number[] {
     const pages: number[] = [];
-    const maxVisible = 5; // Maximum number of page buttons to show
+    const maxVisible = 5;
 
     if (this.totalPages <= maxVisible) {
-      // Show all pages if total is small
       for (let i = 1; i <= this.totalPages; i++) {
         pages.push(i);
       }
     } else {
-      // Show smart pagination
       if (this.page <= 3) {
-        // Near the beginning
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push(-1); // Ellipsis
+        pages.push(-1);
         pages.push(this.totalPages);
       } else if (this.page >= this.totalPages - 2) {
-        // Near the end
         pages.push(1);
-        pages.push(-1); // Ellipsis
+        pages.push(-1);
         for (let i = this.totalPages - 3; i <= this.totalPages; i++) {
           pages.push(i);
         }
       } else {
-        // In the middle
         pages.push(1);
-        pages.push(-1); // Ellipsis
+        pages.push(-1);
         pages.push(this.page - 1);
         pages.push(this.page);
         pages.push(this.page + 1);
-        pages.push(-1); // Ellipsis
+        pages.push(-1);
         pages.push(this.totalPages);
       }
     }
@@ -205,35 +182,21 @@ export class Products implements OnInit {
     return pages;
   }
 
-  addToCart(product: any) {
-    this.cartService.addToCart({ product: product._id, quantity: 1 }).subscribe({
-      next: (res: any) => {
-        console.log('Added to cart:', product.name);
-        console.log('Product added to cart:', res);
-      },
-      error: (error) => {
-        console.error('Error adding product to cart:', error);
-      },
-    });
+  // Navigate to product details page
+  viewProductDetails(product: any) {
+    // Use slug for SEO-friendly URLs
+    this.router.navigate(['/product', product.slug]);
   }
+
   getCartCount() {
     this.cartService.getCartItems().subscribe({
       next: (res: any) => {
-        this.cartCount = res.length;
-        console.log('Cart count:', res.cartItems.length);
+        this.cartCount = res.products?.length || 0;
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error getting cart count:', error);
-      },
+      error: (error) => console.error('Error getting cart count:', error),
     });
   }
-  // getCount() {
-  //   console.log('====================================');
-  //   console.log(this.cartCount, 'my cart cunt');
-  //   console.log('====================================');
-  //   return this.cartCount;
-  // }
 
   goToCart() {
     this.router.navigate(['/cart']);
@@ -252,6 +215,7 @@ export class Products implements OnInit {
     const subcategory = this.allSubcategories.find((sub) => sub._id === subcategoryId);
     return subcategory ? subcategory.name : '';
   }
+
   goToOrders() {
     this.router.navigate(['/trackOrder']);
   }
